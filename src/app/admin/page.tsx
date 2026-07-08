@@ -57,7 +57,10 @@ export default function AdminDemo() {
     <div className={styles.adminContainer}>
       {/* Sidebar */}
       <div className={styles.sidebar}>
-        <div className={styles.sidebarLogo}>Tejaswini Admin</div>
+        <div className={styles.sidebarLogo}>
+          <img src="/logo.jpg" alt="Tejaswini Logo" className={styles.adminLogoImg} />
+          Tejaswini Admin
+        </div>
         <div className={`${styles.navItem} ${activeTab === 'Dashboard' ? styles.active : ''}`} onClick={() => setActiveTab('Dashboard')}>Dashboard</div>
         <div className={`${styles.navItem} ${activeTab === 'Products' ? styles.active : ''}`} onClick={() => setActiveTab('Products')}>Products</div>
         <div className={`${styles.navItem} ${activeTab === 'Categories' ? styles.active : ''}`} onClick={() => setActiveTab('Categories')}>Categories</div>

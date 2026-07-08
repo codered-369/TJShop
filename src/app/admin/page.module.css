@@ -20,6 +20,17 @@
   color: var(--color-primary);
   margin-bottom: 3rem;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.adminLogoImg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .navItem {
@@ -298,4 +309,91 @@
   object-fit: contain;
   border-radius: 6px;
   margin-bottom: 0.5rem;
+}
+
+/* --- Mobile View Enhancements --- */
+@media (max-width: 768px) {
+  .adminContainer {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 1rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .sidebarLogo {
+    width: 100%;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-size: 1.4rem;
+  }
+
+  .navItem {
+    flex: 1;
+    min-width: auto;
+    text-align: center;
+    padding: 0.6rem 0.5rem;
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  .mainContent {
+    padding: 1.5rem 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .tableContainer {
+    overflow-x: auto; /* Allows horizontal scrolling of wide tables */
+  }
+
+  .table th, .table td {
+    padding: 1rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .productThumb {
+    width: 30px;
+    height: 30px;
+  }
+
+  .actionBtn {
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .modal {
+    padding: 1.5rem;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .formRow {
+    flex-direction: column;
+    gap: 0;
+  }
 }

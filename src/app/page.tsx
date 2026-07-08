@@ -1,9 +1,9 @@
 import styles from "./page.module.css";
 
 const products = [
-  { id: '101', name: 'Crimson Silk Saree', price: '₹4,999', category: 'Sarees', image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=800' },
-  { id: '102', name: 'Embroidered Anarkali', price: '₹2,499', category: 'Kurtis', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800' },
-  { id: '103', name: 'Gold Zari Lehenga', price: '₹12,999', category: 'Lehengas', image: 'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?q=80&w=800' },
+  { id: '101', name: 'Crimson Silk Saree', price: '₹4,999', category: 'Sarees', image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=800', badge: 'Bestseller' },
+  { id: '102', name: 'Embroidered Anarkali', price: '₹2,499', category: 'Kurtis', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800', badge: 'Just In' },
+  { id: '103', name: 'Gold Zari Lehenga', price: '₹12,999', category: 'Lehengas', image: 'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?q=80&w=800', badge: 'Limited Edition' },
 ];
 
 const categories = [
@@ -37,9 +37,9 @@ export default function Home() {
         <div className={styles.heroContent}>
           <h1 className={styles.title}>Elegance in <br/>Every Thread.</h1>
           <p className={styles.subtitle}>
-            Discover our curated collection of premium sarees, kurtis, and authentic fabrics designed for the modern woman.
+            Discover our handpicked collection of premium sarees and authentic fabrics. Crafted for the woman who owns her elegance.
           </p>
-          <a href="#new-arrivals" className={styles.ctaButton}>Explore Collection</a>
+          <a href="#new-arrivals" className={styles.ctaButton}>Find Your Perfect Look</a>
         </div>
       </section>
 
@@ -68,16 +68,17 @@ export default function Home() {
       </section>
 
       <section id="new-arrivals" className={styles.section}>
-        <h2 className={styles.sectionTitle}>New Arrivals</h2>
+        <h2 className={styles.sectionTitle}>Trending This Week</h2>
         <div className={styles.productGrid}>
           {products.map((product) => {
-            const message = `Hi, I am interested in the ${product.name} (ID: ${product.id}) priced at ${product.price}. Is it in stock?`;
+            const message = `Hi! I'm absolutely in love with the ${product.name} (ID: ${product.id}). Is it still available?`;
             const waLink = `https://wa.me/919999999999?text=${encodeURIComponent(message)}`;
             
             return (
               <div key={product.id} className={styles.productCard}>
                 <div className={styles.imageContainer}>
                   <img src={product.image} alt={product.name} className={styles.productImage} loading="lazy" />
+                  {product.badge && <span className={styles.productBadge}>{product.badge}</span>}
                 </div>
                 <div className={styles.productInfo}>
                   <span className={styles.productCategory}>{product.category}</span>
