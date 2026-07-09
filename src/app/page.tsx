@@ -33,7 +33,20 @@ export default async function Home({ searchParams }: { searchParams: { category?
         <nav className={styles.nav}>
           <div className={styles.logoContainer}>
             <img src="/logo.png" alt="Tejaswini Logo" className={styles.navLogo} />
-            <span className={styles.logoText}>Tejaswini</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span className={styles.logoText} style={{ lineHeight: '1.1' }}>Tejaswini</span>
+              <span style={{ 
+                fontSize: '0.65rem', 
+                textTransform: 'uppercase', 
+                letterSpacing: '2px', 
+                color: 'var(--color-primary)', 
+                marginTop: '2px', 
+                fontWeight: 500,
+                opacity: 0.8
+              }}>
+                Selective Fabrics
+              </span>
+            </div>
           </div>
         <div className={styles.navLinks}>
           <a href="#new-arrivals">Trending</a>
