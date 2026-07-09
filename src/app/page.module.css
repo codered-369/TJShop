@@ -73,8 +73,10 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 80px 5% 0; /* added padding to account for fixed nav */
-  background: radial-gradient(circle at center, #ffffff 0%, var(--color-bg) 100%);
+  padding: 80px 5% 0; 
+  background-image: linear-gradient(rgba(133, 28, 44, 0.4), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1583391733958-d25e07fac661?q=80&w=2000');
+  background-size: cover;
+  background-position: center 30%;
   position: relative;
 }
 
@@ -87,14 +89,16 @@
   font-size: 4.5rem;
   line-height: 1.1;
   margin-bottom: 1.5rem;
-  color: var(--color-primary);
+  color: #ffffff;
+  text-shadow: 0 4px 15px rgba(0,0,0,0.4);
 }
 
 .subtitle {
   font-size: 1.2rem;
-  color: var(--color-text-light);
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 2.5rem;
   font-weight: 300;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.4);
 }
 
 .ctaButton {
@@ -153,19 +157,7 @@
   font-size: 0.9rem;
 }
 
-.title {
-  font-size: 4.5rem;
-  line-height: 1.1;
-  margin-bottom: 1.5rem;
-  color: var(--color-primary);
-}
 
-.subtitle {
-  font-size: 1.2rem;
-  color: var(--color-text-light);
-  margin-bottom: 2.5rem;
-  font-weight: 300;
-}
 
 .ctaButton {
   display: inline-block;
@@ -371,6 +363,48 @@
   color: var(--color-primary);
 }
 
+/* --- Testimonials --- */
+.testimonialGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.testimonialCard {
+  background: #ffffff;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  text-align: center;
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: transform 0.3s ease;
+}
+
+.testimonialCard:hover {
+  transform: translateY(-5px);
+}
+
+.stars {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.quote {
+  font-style: italic;
+  color: var(--color-text-light);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.customerName {
+  font-family: var(--font-playfair), serif;
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
 /* --- Store Section --- */
 .storeSection {
   padding: 5rem 5%;
@@ -566,6 +600,11 @@
   }
   .featureItem {
     padding: 1rem;
+  }
+
+  .testimonialGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 
   .categoryGrid {

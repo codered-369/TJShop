@@ -12,8 +12,22 @@ interface Product {
   image: string;
 }
 
+interface Order {
+  id: string;
+  order_id: string;
+  customer_name: string;
+  product_name: string;
+  created_at: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  image: string;
+}
+
 export default function AdminDemo() {
-  const [activeTab, setActiveTab] = useState('Products');
+  const [activeTab, setActiveTab] = useState('Dashboard');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,6 +35,36 @@ export default function AdminDemo() {
   const [formData, setFormData] = useState<Product>({ id: '', name: '', price: '', category: 'Sarees', stock: 0, image: '' });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [orderForm, setOrderForm] = useState({ customerName: '' });
+  const [selectedQuantities, setSelectedQuantities] = useState<{ [key: string]: number }>({});
+  
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryForm, setCategoryForm] = useState({ name: '' });
+  const [categoryImageFile, setCategoryImageFile] = useState<File | null>(null);
+
+  // Custom Notifications
+  const [toast, setToast] = useState({ message: '', type: '' });
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast({ message: '', type: '' }), 3000);
+  };
+
+  const updateQuantity = (id: string, delta: number, maxStock: number) => {
+    setSelectedQuantities(prev => {
+      const current = prev[id] || 0;
+      const next = current + delta;
+      if (next <= 0) {
+        const { [id]: _, ...rest } = prev;
+        return rest;
+      }
+      if (next > maxStock) return prev;
+      return { ...prev, [id]: next };
+    });
+  };
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -30,23 +74,39 @@ export default function AdminDemo() {
     setIsLoading(false);
   };
 
+  const fetchOrders = async () => {
+    const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+    if (data) setOrders(data);
+  };
+
+  const fetchCategories = async () => {
+    const { data } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
+    if (data) setCategories(data);
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchOrders();
+    fetchCategories();
   }, []);
 
   const lowStockCount = products.filter(p => p.stock < 5 && p.stock > 0).length;
   const outOfStockCount = products.filter(p => p.stock === 0).length;
   const totalInventoryValue = products.reduce((acc, p) => acc + (parseFloat(p.price) * p.stock), 0);
 
-  const handleDelete = async (id: string) => {
-    if(confirm("Are you sure you want to permanently delete this product?")) {
-      try {
-        const { error } = await supabase.from('products').delete().eq('id', id);
-        if (error) throw error;
-        setProducts(products.filter(p => p.id !== id));
-      } catch (error: any) {
-        alert("Error deleting: " + error.message);
-      }
+  const confirmDelete = (id: string) => setDeleteConfirmId(id);
+
+  const executeDelete = async () => {
+    if (!deleteConfirmId) return;
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', deleteConfirmId);
+      if (error) throw error;
+      setProducts(products.filter(p => p.id !== deleteConfirmId));
+      showToast("Product deleted successfully.");
+    } catch (error: any) {
+      showToast("Error deleting: " + error.message, "error");
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -71,7 +131,6 @@ export default function AdminDemo() {
     try {
       let finalImageUrl = formData.image;
 
-      // 1. Upload image to Supabase Storage if a new file was selected
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
@@ -82,7 +141,6 @@ export default function AdminDemo() {
 
         if (uploadError) throw new Error("Image upload failed: " + uploadError.message);
 
-        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('product-images')
           .getPublicUrl(fileName);
@@ -98,7 +156,6 @@ export default function AdminDemo() {
         image: finalImageUrl,
       };
 
-      // 2. Save to Supabase Database
       if (editingProduct) {
         const { error } = await supabase.from('products').update(productPayload).eq('id', editingProduct.id);
         if (error) throw error;
@@ -107,18 +164,121 @@ export default function AdminDemo() {
         if (error) throw error;
       }
 
-      // Refresh table
       await fetchProducts();
       setIsModalOpen(false);
+      showToast("Product saved successfully!");
     } catch (error: any) {
-      alert(error.message);
+      showToast(error.message, "error");
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handleCreateOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const selectedIds = Object.keys(selectedQuantities);
+    if (selectedIds.length === 0) {
+      showToast("Please select at least one product sold.", "error");
+      return;
+    }
+
+    const orderDetails = selectedIds.map(id => {
+      const p = products.find(prod => prod.id === id);
+      return `${p?.name} (x${selectedQuantities[id]})`;
+    }).join(', ');
+    
+    const generatedId = `TJ-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const { error } = await supabase.from('orders').insert([{
+      order_id: generatedId,
+      customer_name: orderForm.customerName,
+      product_name: orderDetails
+    }]);
+
+    if (error) {
+      showToast("Error creating order: " + error.message, "error");
+      return;
+    }
+
+    for (const id of selectedIds) {
+      const p = products.find(prod => prod.id === id);
+      if (p) {
+        const newStock = Math.max(0, p.stock - selectedQuantities[id]);
+        await supabase.from('products').update({ stock: newStock }).eq('id', id);
+      }
+    }
+
+    showToast(`Order created! Sent to customer: ${generatedId}`);
+    setOrderForm({ customerName: '' });
+    setSelectedQuantities({});
+    fetchOrders();
+    fetchProducts();
+  };
+
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryImageFile) {
+      showToast("Please select a category image.", "error");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const fileExt = categoryImageFile.name.split('.').pop();
+      const fileName = `cat_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, categoryImageFile);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName);
+
+      const { error } = await supabase.from('categories').insert([{ name: categoryForm.name, image: publicUrl }]);
+      if (error) throw error;
+
+      showToast("Category created successfully!");
+      setCategoryForm({ name: '' });
+      setCategoryImageFile(null);
+      fetchCategories();
+    } catch (error: any) {
+      showToast(error.message, "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (confirm("Delete this category?")) {
+      try {
+        const { error } = await supabase.from('categories').delete().eq('id', id);
+        if (error) throw error;
+        fetchCategories();
+        showToast("Category deleted.");
+      } catch(err:any) {
+        showToast(err.message, "error");
+      }
+    }
+  };
+
   return (
     <div className={styles.adminContainer}>
+      {/* Toast Notification */}
+      {toast.message && (
+        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 99999, background: toast.type === 'success' ? '#28a745' : '#dc3545', color: '#fff', padding: '1rem 2rem', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontWeight: 500 }}>
+          {toast.message}
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className={styles.modalOverlay} style={{ zIndex: 99998 }}>
+          <div className={styles.modal} style={{ maxWidth: '400px', textAlign: 'center', padding: '3rem 2rem' }}>
+            <h2 style={{ marginBottom: '1rem', color: '#dc3545', fontSize: '1.5rem' }}>Delete Product?</h2>
+            <p style={{ color: '#666', marginBottom: '2rem', lineHeight: '1.5' }}>Are you sure you want to permanently delete this item? This action cannot be undone.</p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button onClick={() => setDeleteConfirmId(null)} className={styles.cancelBtn}>Cancel</button>
+              <button onClick={executeDelete} className={styles.saveBtn} style={{ background: '#dc3545' }}>Yes, Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <div className={styles.sidebar}>
         <div className={styles.sidebarLogo}>
@@ -127,6 +287,7 @@ export default function AdminDemo() {
         </div>
         <div className={`${styles.navItem} ${activeTab === 'Dashboard' ? styles.active : ''}`} onClick={() => setActiveTab('Dashboard')}>Dashboard</div>
         <div className={`${styles.navItem} ${activeTab === 'Products' ? styles.active : ''}`} onClick={() => setActiveTab('Products')}>Products</div>
+        <div className={`${styles.navItem} ${activeTab === 'Orders' ? styles.active : ''}`} onClick={() => setActiveTab('Orders')}>Orders</div>
         <div className={`${styles.navItem} ${activeTab === 'Categories' ? styles.active : ''}`} onClick={() => setActiveTab('Categories')}>Categories</div>
         <div className={`${styles.navItem} ${activeTab === 'Settings' ? styles.active : ''}`} onClick={() => setActiveTab('Settings')}>Settings</div>
       </div>
@@ -218,7 +379,7 @@ export default function AdminDemo() {
                         </td>
                         <td>
                           <button className={styles.actionBtn} onClick={() => handleEdit(product)}>Edit</button>
-                          <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => handleDelete(product.id)}>Delete</button>
+                          <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => confirmDelete(product.id)}>Delete</button>
                         </td>
                       </tr>
                     ))
@@ -229,20 +390,132 @@ export default function AdminDemo() {
           </>
         )}
 
+        {activeTab === 'Orders' && (
+          <div>
+            <div className={styles.header}>
+              <h1 className={styles.pageTitle}>WhatsApp Orders</h1>
+            </div>
+
+            <div className={styles.tableContainer} style={{ padding: '2rem', marginBottom: '2rem' }}>
+              <h3 style={{ marginBottom: '1.5rem', color: 'var(--color-primary)' }}>Log New WhatsApp Sale</h3>
+              <form onSubmit={handleCreateOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                  <label>Customer Name</label>
+                  <input type="text" required className={styles.input} value={orderForm.customerName} onChange={e => setOrderForm({...orderForm, customerName: e.target.value})} placeholder="e.g. Priya Sharma" />
+                </div>
+                
+                <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                  <label>Select Products Sold</label>
+                  <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #ddd', padding: '1rem', borderRadius: '6px', background: '#fafafa' }}>
+                    {products.map(p => (
+                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.8rem', paddingBottom: '0.8rem', borderBottom: '1px solid #eee' }}>
+                        <div style={{ flex: 1, paddingRight: '1rem' }}>
+                          <div style={{ fontWeight: 500 }}>{p.name}</div>
+                          <div style={{ color: p.stock === 0 ? '#dc3545' : '#666', fontSize: '0.85rem' }}>
+                            {p.stock === 0 ? 'Out of Stock' : `${p.stock} in stock`}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', background: '#fff', border: '1px solid #ddd', borderRadius: '4px', padding: '0.2rem' }}>
+                          <button 
+                            type="button" 
+                            onClick={() => updateQuantity(p.id, -1, p.stock)}
+                            disabled={!selectedQuantities[p.id]}
+                            style={{ width: '28px', height: '28px', border: 'none', background: !selectedQuantities[p.id] ? '#f5f5f5' : '#851C2C', color: !selectedQuantities[p.id] ? '#ccc' : '#fff', borderRadius: '4px', cursor: !selectedQuantities[p.id] ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+                          >
+                            -
+                          </button>
+                          <span style={{ width: '20px', textAlign: 'center', fontWeight: 600 }}>
+                            {selectedQuantities[p.id] || 0}
+                          </span>
+                          <button 
+                            type="button" 
+                            onClick={() => updateQuantity(p.id, 1, p.stock)}
+                            disabled={p.stock === 0 || (selectedQuantities[p.id] || 0) >= p.stock}
+                            style={{ width: '28px', height: '28px', border: 'none', background: p.stock === 0 || (selectedQuantities[p.id] || 0) >= p.stock ? '#f5f5f5' : '#851C2C', color: p.stock === 0 || (selectedQuantities[p.id] || 0) >= p.stock ? '#ccc' : '#fff', borderRadius: '4px', cursor: p.stock === 0 || (selectedQuantities[p.id] || 0) >= p.stock ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button type="submit" className={styles.saveBtn} style={{ padding: '1rem 2rem', alignSelf: 'flex-start' }}>Generate Order ID & Decrement Stock</button>
+              </form>
+            </div>
+
+            <div className={styles.tableContainer}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Date Logged</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} style={{ textAlign: 'center', padding: '3rem' }}>No orders logged yet.</td>
+                    </tr>
+                  ) : (
+                    orders.map(order => (
+                      <tr key={order.id}>
+                        <td style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{order.order_id}</td>
+                        <td>{order.customer_name}</td>
+                        <td>{order.product_name}</td>
+                        <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'Categories' && (
           <div>
             <div className={styles.header}>
               <h1 className={styles.pageTitle}>Manage Categories</h1>
-              <button className={styles.addButton}>+ Add Category</button>
             </div>
+
+            <div className={styles.tableContainer} style={{ padding: '2rem', marginBottom: '2rem' }}>
+              <h3 style={{ marginBottom: '1.5rem', color: 'var(--color-primary)' }}>Add New Category</h3>
+              <form onSubmit={handleCreateCategory} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div className={styles.formGroup} style={{ flex: 1, minWidth: '200px', marginBottom: 0 }}>
+                  <label>Category Name</label>
+                  <input type="text" required className={styles.input} value={categoryForm.name} onChange={e => setCategoryForm({...categoryForm, name: e.target.value})} placeholder="e.g. Sarees" />
+                </div>
+                <div className={styles.formGroup} style={{ flex: 1, minWidth: '200px', marginBottom: 0 }}>
+                  <label>Thumbnail Image</label>
+                  <input type="file" accept="image/*" required className={styles.input} onChange={e => { if(e.target.files) setCategoryImageFile(e.target.files[0]) }} style={{ padding: '0.5rem' }} />
+                </div>
+                <button type="submit" className={styles.saveBtn} style={{ padding: '0.8rem 2rem' }} disabled={isSaving}>
+                  {isSaving ? 'Uploading...' : 'Save Category'}
+                </button>
+              </form>
+            </div>
+
             <div className={styles.tableContainer}>
               <table className={styles.table}>
-                <thead><tr><th>Category Name</th><th>Items Count</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Thumbnail</th><th>Category Name</th><th>Actions</th></tr></thead>
                 <tbody>
-                  <tr><td>Sarees</td><td>12 active items</td><td><button className={styles.actionBtn}>Edit</button></td></tr>
-                  <tr><td>Kurtis</td><td>5 active items</td><td><button className={styles.actionBtn}>Edit</button></td></tr>
-                  <tr><td>Lehengas</td><td>2 active items</td><td><button className={styles.actionBtn}>Edit</button></td></tr>
-                  <tr><td>Fabrics</td><td>0 active items</td><td><button className={styles.actionBtn}>Edit</button></td></tr>
+                  {categories.length === 0 ? (
+                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem' }}>No categories created yet.</td></tr>
+                  ) : (
+                    categories.map(cat => (
+                      <tr key={cat.id}>
+                        <td><img src={cat.image} alt={cat.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} /></td>
+                        <td style={{ fontWeight: 600 }}>{cat.name}</td>
+                        <td>
+                          <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => handleDeleteCategory(cat.id)}>Delete</button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -259,7 +532,7 @@ export default function AdminDemo() {
               </div>
               <div className={styles.formGroup}>
                 <label>WhatsApp Number (For receiving orders)</label>
-                <input type="text" className={styles.input} defaultValue="+91 99999 99999" />
+                <input type="text" className={styles.input} defaultValue="+91 94835 00835" />
               </div>
               <div className={styles.formGroup}>
                 <label>Store Physical Address</label>
@@ -294,10 +567,10 @@ export default function AdminDemo() {
               <div className={styles.formGroup}>
                 <label>Category</label>
                 <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className={styles.input}>
-                  <option value="Sarees">Sarees</option>
-                  <option value="Kurtis">Kurtis</option>
-                  <option value="Lehengas">Lehengas</option>
-                  <option value="Fabrics">Fabrics</option>
+                  <option value="">Select a Category</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
                 </select>
               </div>
               <div className={styles.formGroup}>

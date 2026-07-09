@@ -1,15 +1,9 @@
 import styles from "./page.module.css";
 import { supabase } from "../lib/supabaseClient";
+import ReviewSection from "@/components/ReviewSection";
 
-export const revalidate = 0; // Always fetch fresh data from database
-
-
-const categories = [
-  { name: 'Sarees', image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=800' },
-  { name: 'Kurtis', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800' },
-  { name: 'Lehengas', image: 'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?q=80&w=800' },
-  { name: 'Fabrics', image: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?q=80&w=800' },
-];
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 const features = [
   { icon: '✨', title: 'Premium Quality', desc: 'Handpicked authentic fabrics' },
@@ -17,9 +11,19 @@ const features = [
   { icon: '💬', title: 'Personal Support', desc: 'Easy ordering via WhatsApp' }
 ];
 
-export default async function Home() {
-  const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-  const products = data || [];
+export default async function Home({ searchParams }: { searchParams: { category?: string } | Promise<{ category?: string }> }) {
+  const params = await Promise.resolve(searchParams);
+  const selectedCategory = params?.category;
+
+  const { data: catData } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
+  const categories = catData || [];
+
+  let query = supabase.from('products').select('*').order('created_at', { ascending: false });
+  if (selectedCategory) {
+    query = query.ilike('category', selectedCategory);
+  }
+  const { data: prodData } = await query;
+  const products = prodData || [];
 
   return (
     <main className={styles.main}>
@@ -29,8 +33,9 @@ export default async function Home() {
           <span className={styles.logoText}>Tejaswini</span>
         </div>
         <div className={styles.navLinks}>
-          <a href="#new-arrivals">New Arrivals</a>
-          <a href="#collections">Collections</a>
+          <a href="#new-arrivals">Trending</a>
+          <a href="#categories">Collections</a>
+          <a href="#testimonials">Reviews</a>
         </div>
       </nav>
 
@@ -57,23 +62,33 @@ export default async function Home() {
       <section id="categories" className={styles.section} style={{ backgroundColor: '#fff' }}>
         <h2 className={styles.sectionTitle}>Shop by Category</h2>
         <div className={styles.categoryGrid}>
-          {categories.map((category) => (
-            <div key={category.name} className={styles.categoryCard}>
+          {categories.length === 0 && <p style={{textAlign: 'center', width: '100%', color: '#666'}}>No categories created yet. Admin can add them in the Dashboard!</p>}
+          {categories.map((category: any) => (
+            <a href={`/?category=${encodeURIComponent(category.name)}#new-arrivals`} key={category.id} className={styles.categoryCard} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
               <div className={styles.categoryImageContainer}>
                 <img src={category.image} alt={category.name} className={styles.categoryImage} loading="lazy" />
               </div>
               <h3 className={styles.categoryName}>{category.name}</h3>
-            </div>
+            </a>
           ))}
         </div>
       </section>
 
       <section id="new-arrivals" className={styles.section}>
-        <h2 className={styles.sectionTitle}>Trending This Week</h2>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', marginBottom: '2rem' }}>
+          <h2 className={styles.sectionTitle} style={{ marginBottom: selectedCategory ? '1rem' : '2.5rem' }}>
+            {selectedCategory ? `${selectedCategory} Collection` : 'Trending This Week'}
+          </h2>
+          {selectedCategory && (
+            <a href="/#new-arrivals" style={{ color: 'var(--color-primary)', textDecoration: 'underline', fontWeight: 500, fontSize: '1.1rem' }}>
+              Clear Filter (View All Products)
+            </a>
+          )}
+        </div>
         <div className={styles.productGrid}>
           {products.map((product) => {
             const message = `Hi! I'm absolutely in love with the ${product.name} (ID: ${product.id}). Is it still available?`;
-            const waLink = `https://wa.me/919999999999?text=${encodeURIComponent(message)}`;
+            const waLink = `https://wa.me/919483500835?text=${encodeURIComponent(message)}`;
             
             return (
               <div key={product.id} className={styles.productCard}>
@@ -99,6 +114,11 @@ export default async function Home() {
             );
           })}
         </div>
+      </section>
+
+      <section id="testimonials" className={styles.section} style={{ backgroundColor: '#FDFBF7' }}>
+        <h2 className={styles.sectionTitle}>Customer Love</h2>
+        <ReviewSection />
       </section>
 
       <section id="visit-us" className={styles.storeSection}>
@@ -142,7 +162,7 @@ export default async function Home() {
           <div className={styles.footerLinks}>
             <h3>Contact Us</h3>
             <p>📍 Shop No. 12, Main Market Street</p>
-            <p>📞 +91 99999 99999</p>
+            <p>📞 +91 94835 00835</p>
             <p>✉️ hello@tejaswinifabrics.com</p>
           </div>
         </div>
