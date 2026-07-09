@@ -278,6 +278,19 @@ export default function AdminDemo() {
     }
   };
 
+  const handleDeleteReview = async (id: string) => {
+    if (confirm("Are you sure you want to delete this review?")) {
+      try {
+        const { error } = await supabase.from('reviews').delete().eq('id', id);
+        if (error) throw error;
+        fetchReviews();
+        showToast("Review deleted successfully.");
+      } catch(err:any) {
+        showToast(err.message, "error");
+      }
+    }
+  };
+
   return (
     <div className={styles.adminContainer}>
       {/* Toast Notification */}
@@ -311,6 +324,7 @@ export default function AdminDemo() {
         <div className={`${styles.navItem} ${activeTab === 'Products' ? styles.active : ''}`} onClick={() => setActiveTab('Products')}>Products</div>
         <div className={`${styles.navItem} ${activeTab === 'Orders' ? styles.active : ''}`} onClick={() => setActiveTab('Orders')}>Orders</div>
         <div className={`${styles.navItem} ${activeTab === 'Categories' ? styles.active : ''}`} onClick={() => setActiveTab('Categories')}>Categories</div>
+        <div className={`${styles.navItem} ${activeTab === 'Reviews' ? styles.active : ''}`} onClick={() => setActiveTab('Reviews')}>Reviews</div>
         <div className={`${styles.navItem} ${activeTab === 'Settings' ? styles.active : ''}`} onClick={() => setActiveTab('Settings')}>Settings</div>
       </div>
 
@@ -567,6 +581,49 @@ export default function AdminDemo() {
                         <td style={{ fontWeight: 600 }}>{cat.name}</td>
                         <td>
                           <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => handleDeleteCategory(cat.id)}>Delete</button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Reviews' && (
+          <div>
+            <div className={styles.header}>
+              <h1 className={styles.pageTitle}>Manage Customer Reviews</h1>
+            </div>
+
+            <div className={styles.tableContainer}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer Name</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reviews.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>No reviews found.</td>
+                    </tr>
+                  ) : (
+                    reviews.map(review => (
+                      <tr key={review.id}>
+                        <td style={{ fontWeight: 600 }}>{review.order_id}</td>
+                        <td>{review.customer_name}</td>
+                        <td>{'⭐'.repeat(review.rating)}</td>
+                        <td style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{review.comment}</td>
+                        <td>{new Date(review.created_at).toLocaleDateString()}</td>
+                        <td>
+                          <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => handleDeleteReview(review.id)}>Delete</button>
                         </td>
                       </tr>
                     ))
