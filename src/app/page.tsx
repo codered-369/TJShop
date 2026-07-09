@@ -1,6 +1,7 @@
 import styles from "./page.module.css";
 import { supabase } from "../lib/supabaseClient";
 import ReviewSection from "@/components/ReviewSection";
+import SplashScreenWrapper from "./SplashScreenWrapper";
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -26,12 +27,14 @@ export default async function Home({ searchParams }: { searchParams: { category?
   const products = prodData || [];
 
   return (
-    <main className={styles.main}>
-      <nav className={styles.nav}>
-        <div className={styles.logoContainer}>
-          <img src="/logo.jpg" alt="Tejaswini Logo" className={styles.navLogo} />
-          <span className={styles.logoText}>Tejaswini</span>
-        </div>
+    <>
+      <SplashScreenWrapper />
+      <main className={styles.main}>
+        <nav className={styles.nav}>
+          <div className={styles.logoContainer}>
+            <img src="/logo.png" alt="Tejaswini Logo" className={styles.navLogo} />
+            <span className={styles.logoText}>Tejaswini</span>
+          </div>
         <div className={styles.navLinks}>
           <a href="#new-arrivals">Trending</a>
           <a href="#categories">Collections</a>
@@ -164,7 +167,7 @@ export default async function Home({ searchParams }: { searchParams: { category?
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerBrand}>
-            <img src="/logo.jpg" alt="Tejaswini Logo" className={styles.footerLogo} />
+            <img src="/logo.png" alt="Tejaswini Logo" className={styles.footerLogo} />
             <h2 className={styles.logoText}>Tejaswini</h2>
             <p>Selective Fabrics & Elegance</p>
           </div>
@@ -180,5 +183,6 @@ export default async function Home({ searchParams }: { searchParams: { category?
         </div>
       </footer>
     </main>
+    </>
   );
 }

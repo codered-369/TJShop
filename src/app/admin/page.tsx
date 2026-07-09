@@ -347,7 +347,7 @@ export default function AdminDemo() {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#FDFBF7' }}>
          <form onSubmit={handleLogin} style={{ background: '#fff', padding: '3rem', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center', minWidth: '350px' }}>
-            <img src="/logo.jpg" alt="Logo" style={{ width: '60px', height: '60px', borderRadius: '50%', marginBottom: '1rem' }} />
+            <img src="/logo.png" alt="Logo" style={{ width: '60px', height: '60px', borderRadius: '50%', marginBottom: '1rem' }} />
             <h2 style={{ fontFamily: 'var(--font-playfair)', color: 'var(--color-primary)', marginBottom: '1.5rem' }}>Secure Admin Access</h2>
             <input 
               type="email" 
@@ -417,7 +417,7 @@ export default function AdminDemo() {
       {/* Sidebar */}
       <div className={styles.sidebar}>
         <div className={styles.sidebarLogo}>
-          <img src="/logo.jpg" alt="Tejaswini Logo" className={styles.adminLogoImg} />
+          <img src="/logo.png" alt="Tejaswini Logo" className={styles.adminLogoImg} />
           Tejaswini Admin
         </div>
         <div className={`${styles.navItem} ${activeTab === 'Dashboard' ? styles.active : ''}`} onClick={() => setActiveTab('Dashboard')}>Dashboard</div>
