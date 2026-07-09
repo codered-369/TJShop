@@ -40,6 +40,7 @@ export default function AdminDemo() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [orderForm, setOrderForm] = useState({ customerName: '' });
   const [selectedQuantities, setSelectedQuantities] = useState<{ [key: string]: number }>({});
+  const [newlyGeneratedOrder, setNewlyGeneratedOrder] = useState<any>(null);
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryForm, setCategoryForm] = useState({ name: '' });
@@ -184,17 +185,24 @@ export default function AdminDemo() {
   const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     const selectedIds = Object.keys(selectedQuantities);
-    if (selectedIds.length === 0) {
-      showToast("Please select at least one product sold.", "error");
+    if (selectedIds.length === 0 || Object.values(selectedQuantities).every(q => q === 0)) {
+      showToast("Please select at least one product.", "error");
       return;
     }
 
-    const orderDetails = selectedIds.map(id => {
-      const p = products.find(prod => prod.id === id);
-      return `${p?.name} (x${selectedQuantities[id]})`;
-    }).join(', ');
-    
+    let totalPrice = 0;
+    const orderItems = [];
     const generatedId = `TJ-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    for (const id of selectedIds) {
+      const p = products.find(prod => prod.id === id);
+      if (p && selectedQuantities[id] > 0) {
+        orderItems.push(`${selectedQuantities[id]}x ${p.name}`);
+        totalPrice += (Number(p.price) * selectedQuantities[id]);
+      }
+    }
+
+    const orderDetails = orderItems.join(', ');
 
     const { error } = await supabase.from('orders').insert([{
       order_id: generatedId,
@@ -209,13 +217,20 @@ export default function AdminDemo() {
 
     for (const id of selectedIds) {
       const p = products.find(prod => prod.id === id);
-      if (p) {
+      if (p && selectedQuantities[id] > 0) {
         const newStock = Math.max(0, p.stock - selectedQuantities[id]);
         await supabase.from('products').update({ stock: newStock }).eq('id', id);
       }
     }
 
-    showToast(`Order created! Sent to customer: ${generatedId}`);
+    setNewlyGeneratedOrder({
+      id: generatedId,
+      customer: orderForm.customerName,
+      items: orderItems,
+      total: totalPrice
+    });
+
+    showToast(`Order created successfully!`);
     setOrderForm({ customerName: '' });
     setSelectedQuantities({});
     fetchOrders();
@@ -458,9 +473,32 @@ export default function AdminDemo() {
                   </div>
                 </div>
 
-                <button type="submit" className={styles.saveBtn} style={{ padding: '1rem 2rem', alignSelf: 'flex-start' }}>Generate Order ID & Decrement Stock</button>
+                <button type="submit" className={styles.saveBtn} style={{ padding: '1rem 2rem', alignSelf: 'flex-start' }}>Generate Order ID & Calculate Total</button>
               </form>
             </div>
+
+            {newlyGeneratedOrder && (
+              <div style={{ padding: '2rem', background: '#fdfbf7', border: '1px solid #d4af37', borderRadius: '8px', marginBottom: '2rem' }}>
+                <h3 style={{ marginBottom: '1rem', color: 'var(--color-primary)', fontFamily: 'var(--font-playfair)' }}>Order Confirmed! 🎉</h3>
+                <p style={{ marginBottom: '1rem', color: '#666' }}>Order ID: <strong>{newlyGeneratedOrder.id}</strong> has been generated successfully.</p>
+                <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '6px', border: '1px dashed #ccc', marginBottom: '1.5rem', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                  {`Hello ${newlyGeneratedOrder.customer}!\nYour order with Tejaswini Boutique is confirmed. 🎉\n\n*Order ID:* ${newlyGeneratedOrder.id}\n*Items:* \n${newlyGeneratedOrder.items.map((i:any)=> `- ${i}`).join('\n')}\n*Total Amount:* ₹${newlyGeneratedOrder.total}\n\nYou can use this Order ID to securely leave a verified review on our website once you receive your package!\nLet me know how you would like to proceed with the payment.`}
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button 
+                    onClick={() => {
+                      const textToCopy = `Hello ${newlyGeneratedOrder.customer}!\nYour order with Tejaswini Boutique is confirmed. 🎉\n\n*Order ID:* ${newlyGeneratedOrder.id}\n*Items:* \n${newlyGeneratedOrder.items.map((i:any)=> `- ${i}`).join('\n')}\n*Total Amount:* ₹${newlyGeneratedOrder.total}\n\nYou can use this Order ID to securely leave a verified review on our website once you receive your package!\nLet me know how you would like to proceed with the payment.`;
+                      navigator.clipboard.writeText(textToCopy);
+                      showToast("Copied to clipboard! You can now paste it directly in WhatsApp.", "success");
+                    }}
+                    className={styles.saveBtn} style={{ background: '#25D366' }}
+                  >
+                    📋 Copy Invoice for WhatsApp
+                  </button>
+                  <button onClick={() => setNewlyGeneratedOrder(null)} className={styles.actionBtn} style={{ background: '#eee' }}>Clear</button>
+                </div>
+              </div>
+            )}
 
             <div className={styles.tableContainer}>
               <table className={styles.table}>
