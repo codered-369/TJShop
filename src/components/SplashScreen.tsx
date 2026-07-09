@@ -21,38 +21,27 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
       left: 0,
       width: '100vw',
       height: '100vh',
-      backgroundColor: '#FDFBF7', // Matches luxury cream background
+      backgroundColor: '#000', // Cinematic black background
       zIndex: 999999,
       display: 'flex',
-      flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
       opacity: isVisible ? 1 : 0,
       transition: 'opacity 0.5s ease-out',
-      pointerEvents: isVisible ? 'all' : 'none'
+      pointerEvents: isVisible ? 'all' : 'none',
+      overflow: 'hidden'
     }}>
-      <div style={{ 
-        position: 'relative', 
-        width: '100%', 
-        maxWidth: '500px', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center' 
-      }}>
-        <video 
-          src="/splash.mp4" 
-          autoPlay 
-          muted 
-          playsInline 
-          style={{ 
-            width: '100%', 
-            height: 'auto', 
-            borderRadius: '12px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.08)'
-          }}
-        />
-        
-      </div>
+      <video 
+        src="/splash.mp4" 
+        autoPlay 
+        muted 
+        playsInline 
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          objectFit: 'cover'
+        }}
+      />
     </div>
   );
 }
