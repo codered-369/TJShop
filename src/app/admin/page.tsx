@@ -52,7 +52,10 @@ export default function AdminDemo() {
   const [deleteReviewConfirmId, setDeleteReviewConfirmId] = useState<string | null>(null);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -96,11 +99,28 @@ export default function AdminDemo() {
   };
 
   useEffect(() => {
-    fetchProducts();
-    fetchOrders();
-    fetchCategories();
-    fetchReviews();
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) setIsAuthenticated(true);
+      setAuthChecking(false);
+    };
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProducts();
+      fetchOrders();
+      fetchCategories();
+      fetchReviews();
+    }
+  }, [isAuthenticated]);
 
   const lowStockCount = products.filter(p => p.stock < 5 && p.stock > 0).length;
   const outOfStockCount = products.filter(p => p.stock === 0).length;
@@ -298,31 +318,56 @@ export default function AdminDemo() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === 'tejaswini2026') {
-      setIsAuthenticated(true);
-      showToast("Login successful!");
+    setIsLoggingIn(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: emailInput,
+      password: passwordInput,
+    });
+
+    if (error) {
+      showToast(error.message, "error");
     } else {
-      showToast("Incorrect password. Access denied.", "error");
+      showToast("Authentication successful!");
     }
+    setIsLoggingIn(false);
   };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    showToast("Logged out securely.");
+  };
+
+  if (authChecking) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#FDFBF7' }}>Verifying Secure Session...</div>;
+  }
 
   if (!isAuthenticated) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#FDFBF7' }}>
          <form onSubmit={handleLogin} style={{ background: '#fff', padding: '3rem', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center', minWidth: '350px' }}>
             <img src="/logo.jpg" alt="Logo" style={{ width: '60px', height: '60px', borderRadius: '50%', marginBottom: '1rem' }} />
-            <h2 style={{ fontFamily: 'var(--font-playfair)', color: 'var(--color-primary)', marginBottom: '1.5rem' }}>Admin Access</h2>
+            <h2 style={{ fontFamily: 'var(--font-playfair)', color: 'var(--color-primary)', marginBottom: '1.5rem' }}>Secure Admin Access</h2>
+            <input 
+              type="email" 
+              value={emailInput} 
+              onChange={e => setEmailInput(e.target.value)} 
+              placeholder="Admin Email Address"
+              style={{ width: '100%', padding: '0.8rem', marginBottom: '1rem', border: '1px solid #ddd', borderRadius: '4px', outline: 'none' }}
+              required
+            />
             <input 
               type="password" 
               value={passwordInput} 
               onChange={e => setPasswordInput(e.target.value)} 
-              placeholder="Enter Master Password"
+              placeholder="Admin Password"
               style={{ width: '100%', padding: '0.8rem', marginBottom: '1.5rem', border: '1px solid #ddd', borderRadius: '4px', outline: 'none' }}
-              autoFocus
+              required
             />
-            <button type="submit" className={styles.saveBtn} style={{ width: '100%' }}>Login to Dashboard</button>
+            <button type="submit" className={styles.saveBtn} style={{ width: '100%' }} disabled={isLoggingIn}>
+              {isLoggingIn ? 'Authenticating...' : 'Login with Supabase'}
+            </button>
          </form>
          {toast.message && (
             <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 99999, background: toast.type === 'success' ? '#28a745' : '#dc3545', color: '#fff', padding: '1rem 2rem', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontWeight: 500 }}>
@@ -381,6 +426,9 @@ export default function AdminDemo() {
         <div className={`${styles.navItem} ${activeTab === 'Categories' ? styles.active : ''}`} onClick={() => setActiveTab('Categories')}>Categories</div>
         <div className={`${styles.navItem} ${activeTab === 'Reviews' ? styles.active : ''}`} onClick={() => setActiveTab('Reviews')}>Reviews</div>
         <div className={`${styles.navItem} ${activeTab === 'Settings' ? styles.active : ''}`} onClick={() => setActiveTab('Settings')}>Settings</div>
+        <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+          <button onClick={handleLogout} className={styles.actionBtn} style={{ width: '100%', color: '#dc3545', border: '1px solid #dc3545', background: 'transparent' }}>Logout Securely</button>
+        </div>
       </div>
 
       {/* Main Content */}
