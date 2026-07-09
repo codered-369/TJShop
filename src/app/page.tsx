@@ -31,7 +31,7 @@ export default async function Home({ searchParams }: { searchParams: { category?
       <SplashScreenWrapper />
       <main className={styles.main}>
         <nav className={styles.nav}>
-          <div className={styles.logoContainer}>
+          <a href="/" className={styles.logoContainer} style={{ textDecoration: 'none' }}>
             <img src="/logo.png" alt="Tejaswini Logo" className={styles.navLogo} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span className={styles.logoText} style={{ lineHeight: '1.1' }}>Tejaswini</span>
@@ -47,7 +47,7 @@ export default async function Home({ searchParams }: { searchParams: { category?
                 Selective Fabrics
               </span>
             </div>
-          </div>
+          </a>
         <div className={styles.navLinks}>
           <a href="#new-arrivals">Trending</a>
           <a href="#categories">Collections</a>
