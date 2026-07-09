@@ -50,6 +50,7 @@ export default function AdminDemo() {
   const [toast, setToast] = useState({ message: '', type: '' });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteReviewConfirmId, setDeleteReviewConfirmId] = useState<string | null>(null);
+  const [deleteCategoryConfirmId, setDeleteCategoryConfirmId] = useState<string | null>(null);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [emailInput, setEmailInput] = useState('');
@@ -289,16 +290,19 @@ export default function AdminDemo() {
     }
   };
 
-  const handleDeleteCategory = async (id: string) => {
-    if (confirm("Delete this category?")) {
-      try {
-        const { error } = await supabase.from('categories').delete().eq('id', id);
-        if (error) throw error;
-        fetchCategories();
-        showToast("Category deleted.");
-      } catch(err:any) {
-        showToast(err.message, "error");
-      }
+  const confirmDeleteCategory = (id: string) => setDeleteCategoryConfirmId(id);
+
+  const executeDeleteCategory = async () => {
+    if (!deleteCategoryConfirmId) return;
+    try {
+      const { error } = await supabase.from('categories').delete().eq('id', deleteCategoryConfirmId);
+      if (error) throw error;
+      fetchCategories();
+      showToast("Category deleted.");
+    } catch(err:any) {
+      showToast(err.message, "error");
+    } finally {
+      setDeleteCategoryConfirmId(null);
     }
   };
 
@@ -414,6 +418,19 @@ export default function AdminDemo() {
         </div>
       )}
 
+      {deleteCategoryConfirmId && (
+        <div className={styles.modalOverlay} style={{ zIndex: 99998 }}>
+          <div className={styles.modal} style={{ maxWidth: '400px', textAlign: 'center', padding: '3rem 2rem' }}>
+            <h2 style={{ marginBottom: '1rem', color: '#dc3545', fontSize: '1.5rem' }}>Delete Category?</h2>
+            <p style={{ color: '#666', marginBottom: '2rem', lineHeight: '1.5' }}>Are you sure you want to permanently delete this category? This action cannot be undone.</p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button onClick={() => setDeleteCategoryConfirmId(null)} className={styles.cancelBtn}>Cancel</button>
+              <button onClick={executeDeleteCategory} className={styles.saveBtn} style={{ background: '#dc3545' }}>Yes, Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <div className={styles.sidebar}>
         <div className={styles.sidebarLogo}>
@@ -426,7 +443,11 @@ export default function AdminDemo() {
         <div className={`${styles.navItem} ${activeTab === 'Categories' ? styles.active : ''}`} onClick={() => setActiveTab('Categories')}>Categories</div>
         <div className={`${styles.navItem} ${activeTab === 'Reviews' ? styles.active : ''}`} onClick={() => setActiveTab('Reviews')}>Reviews</div>
         <div className={`${styles.navItem} ${activeTab === 'Settings' ? styles.active : ''}`} onClick={() => setActiveTab('Settings')}>Settings</div>
-        <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+        
+        <div style={{ marginTop: 'auto', paddingTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <a href="/" target="_blank" rel="noopener noreferrer" className={styles.actionBtn} style={{ width: '100%', textAlign: 'center', textDecoration: 'none', background: '#FDFBF7', color: 'var(--color-primary)', border: '1px solid var(--color-primary)' }}>
+            Visit Storefront ↗
+          </a>
           <button onClick={handleLogout} className={styles.actionBtn} style={{ width: '100%', color: '#dc3545', border: '1px solid #dc3545', background: 'transparent' }}>Logout Securely</button>
         </div>
       </div>
@@ -683,7 +704,7 @@ export default function AdminDemo() {
                         <td><img src={cat.image} alt={cat.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} /></td>
                         <td style={{ fontWeight: 600 }}>{cat.name}</td>
                         <td>
-                          <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => handleDeleteCategory(cat.id)}>Delete</button>
+                          <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => confirmDeleteCategory(cat.id)}>Delete</button>
                         </td>
                       </tr>
                     ))
