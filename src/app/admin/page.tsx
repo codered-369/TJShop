@@ -51,6 +51,9 @@ export default function AdminDemo() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteReviewConfirmId, setDeleteReviewConfirmId] = useState<string | null>(null);
 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast({ message: '', type: '' }), 3000);
@@ -294,6 +297,41 @@ export default function AdminDemo() {
       setDeleteReviewConfirmId(null);
     }
   };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === 'tejaswini2026') {
+      setIsAuthenticated(true);
+      showToast("Login successful!");
+    } else {
+      showToast("Incorrect password. Access denied.", "error");
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#FDFBF7' }}>
+         <form onSubmit={handleLogin} style={{ background: '#fff', padding: '3rem', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center', minWidth: '350px' }}>
+            <img src="/logo.jpg" alt="Logo" style={{ width: '60px', height: '60px', borderRadius: '50%', marginBottom: '1rem' }} />
+            <h2 style={{ fontFamily: 'var(--font-playfair)', color: 'var(--color-primary)', marginBottom: '1.5rem' }}>Admin Access</h2>
+            <input 
+              type="password" 
+              value={passwordInput} 
+              onChange={e => setPasswordInput(e.target.value)} 
+              placeholder="Enter Master Password"
+              style={{ width: '100%', padding: '0.8rem', marginBottom: '1.5rem', border: '1px solid #ddd', borderRadius: '4px', outline: 'none' }}
+              autoFocus
+            />
+            <button type="submit" className={styles.saveBtn} style={{ width: '100%' }}>Login to Dashboard</button>
+         </form>
+         {toast.message && (
+            <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 99999, background: toast.type === 'success' ? '#28a745' : '#dc3545', color: '#fff', padding: '1rem 2rem', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontWeight: 500 }}>
+              {toast.message}
+            </div>
+         )}
+      </div>
+    );
+  }
 
   return (
     <div className={styles.adminContainer}>
