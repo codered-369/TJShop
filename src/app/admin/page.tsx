@@ -306,6 +306,24 @@ export default function AdminDemo() {
     }
   };
 
+  const handleNativeShare = async (textToShare: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Tejaswini Order Confirmation',
+          text: textToShare
+        });
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          showToast("Failed to share.", "error");
+        }
+      }
+    } else {
+      navigator.clipboard.writeText(textToShare);
+      showToast("Copied to clipboard! Ready to paste in WhatsApp.", "success");
+    }
+  };
+
   const confirmDeleteReview = (id: string) => setDeleteReviewConfirmId(id);
 
   const executeDeleteReview = async () => {
@@ -625,13 +643,12 @@ export default function AdminDemo() {
                 <div style={{ display: 'flex', gap: '1rem' }}>
                   <button 
                     onClick={() => {
-                      const textToCopy = `Hello ${newlyGeneratedOrder.customer}!\nYour order with Tejaswini Boutique is confirmed. 🎉\n\n*Order ID:* ${newlyGeneratedOrder.id}\n*Items:* \n${newlyGeneratedOrder.items.map((i:any)=> `- ${i}`).join('\n')}\n*Total Amount:* ₹${newlyGeneratedOrder.total}\n\nYou can use this Order ID to securely leave a verified review on our website once you receive your package!\nLet me know how you would like to proceed with the payment.`;
-                      navigator.clipboard.writeText(textToCopy);
-                      showToast("Copied to clipboard! You can now paste it directly in WhatsApp.", "success");
+                      const textToShare = `Hello ${newlyGeneratedOrder.customer}!\nYour order with Tejaswini Boutique is confirmed. 🎉\n\n*Order ID:* ${newlyGeneratedOrder.id}\n*Items:* \n${newlyGeneratedOrder.items.map((i:any)=> `- ${i}`).join('\n')}\n*Total Amount:* ₹${newlyGeneratedOrder.total}\n\nYou can use this Order ID to securely leave a verified review on our website once you receive your package!\nLet me know how you would like to proceed with the payment.`;
+                      handleNativeShare(textToShare);
                     }}
                     className={styles.saveBtn} style={{ background: '#25D366' }}
                   >
-                    📋 Copy Invoice for WhatsApp
+                    📤 Share Invoice
                   </button>
                   <button onClick={() => setNewlyGeneratedOrder(null)} className={styles.actionBtn} style={{ background: '#eee' }}>Clear</button>
                 </div>
@@ -646,12 +663,13 @@ export default function AdminDemo() {
                     <th>Customer</th>
                     <th>Product</th>
                     <th>Date Logged</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan={4} style={{ textAlign: 'center', padding: '3rem' }}>No orders logged yet.</td>
+                      <td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>No orders logged yet.</td>
                     </tr>
                   ) : (
                     orders.map(order => (
@@ -660,6 +678,19 @@ export default function AdminDemo() {
                         <td>{order.customer_name}</td>
                         <td>{order.product_name}</td>
                         <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                        <td>
+                          <button 
+                            className={styles.actionBtn} 
+                            onClick={() => {
+                              const textToShare = `Hello ${order.customer_name}!\nYour order with Tejaswini Boutique is confirmed. 🎉\n\n*Order ID:* ${order.order_id}\n*Items:* \n${order.product_name}\n\nYou can use this Order ID to securely leave a verified review on our website once you receive your package!\nLet me know how you would like to proceed.`;
+                              handleNativeShare(textToShare);
+                            }}
+                            title="Share via WhatsApp or other apps"
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', padding: 0, borderRadius: '50%', background: '#25D366', color: 'white', border: 'none' }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                          </button>
+                        </td>
                       </tr>
                     ))
                   )}
