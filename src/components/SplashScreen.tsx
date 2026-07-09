@@ -21,7 +21,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
       left: 0,
       width: '100vw',
       height: '100vh',
-      backgroundColor: '#000', // Cinematic black background
+      backgroundColor: '#FDFBF7', // Luxury cream background
       zIndex: 999999,
       display: 'flex',
       justifyContent: 'center',
@@ -31,18 +31,29 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
       pointerEvents: isVisible ? 'all' : 'none',
       overflow: 'hidden'
     }}>
-      <video 
-        src="/splash.mp4" 
-        autoPlay 
-        muted 
-        playsInline 
-        ref={(el) => { if (el) el.playbackRate = 1.3; }} // Speeds up the video playback by 30%
-        style={{ 
-          width: '100%', 
-          height: '100%', 
-          objectFit: 'cover'
-        }}
-      />
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth: '800px', // Scales nicely on desktop, fits perfectly on mobile
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <video 
+          src="/splash.mp4" 
+          autoPlay 
+          muted 
+          playsInline 
+          ref={(el) => { if (el) el.playbackRate = 1.3; }} // Speeds up the video playback by 30%
+          style={{ 
+            width: '100%', 
+            height: 'auto', 
+            // The magic CSS trick: Fades the harsh edges perfectly into the background!
+            WebkitMaskImage: 'radial-gradient(ellipse at center, black 50%, transparent 85%)',
+            maskImage: 'radial-gradient(ellipse at center, black 50%, transparent 85%)',
+          }}
+        />
+      </div>
     </div>
   );
 }
