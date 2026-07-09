@@ -42,9 +42,18 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
         ref={(el) => { if (el) el.playbackRate = 1.3; }}
       />
       
-      {/* MOBILE VIEW: The Native App CSS Animation */}
+      {/* MOBILE VIEW: The Circular Video Badge */}
       <div className="splash-mobile-animation">
-        <img src="/logo.png" alt="Tejaswini Logo" className="splash-mobile-logo" />
+        <div className="circular-video-wrapper">
+          <video 
+            src="/splash.mp4" 
+            autoPlay 
+            muted 
+            playsInline 
+            ref={(el) => { if (el) el.playbackRate = 1.3; }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `
@@ -69,11 +78,14 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
           align-items: center;
         }
 
-        .splash-mobile-logo {
-          width: 280px;
-          height: auto;
-          filter: drop-shadow(0 15px 30px rgba(133, 28, 44, 0.15)); /* Subtle maroon shadow */
-          animation: mobileElegance 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        .circular-video-wrapper {
+          width: 250px;
+          height: 250px;
+          border-radius: 50%;
+          overflow: hidden;
+          box-shadow: 0 20px 40px rgba(133, 28, 44, 0.2); /* Deep maroon shadow */
+          border: 4px solid #fff;
+          animation: circularElegance 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
 
         /* Media Query to switch views */
@@ -91,10 +103,10 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
           100% { transform: scale(1); }
         }
 
-        @keyframes mobileElegance {
+        @keyframes circularElegance {
           0% {
             opacity: 0;
-            transform: scale(0.9) translateY(20px);
+            transform: scale(0.8) translateY(20px);
           }
           50% {
             opacity: 1;
