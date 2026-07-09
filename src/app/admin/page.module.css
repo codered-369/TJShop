@@ -148,16 +148,33 @@
 }
 
 .actionBtn {
-  background: transparent;
-  border: none;
+  background: rgba(133, 28, 44, 0.05); /* Very light maroon */
+  border: 1px solid rgba(133, 28, 44, 0.15);
   color: var(--color-primary);
   cursor: pointer;
   font-weight: 500;
-  margin-right: 1rem;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: inline-block;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.actionBtn:hover {
+  background: rgba(133, 28, 44, 0.15);
 }
 
 .actionBtn.delete {
+  background: rgba(220, 53, 69, 0.05); /* Very light red */
+  border: 1px solid rgba(220, 53, 69, 0.15);
   color: #dc3545;
+}
+
+.actionBtn.delete:hover {
+  background: rgba(220, 53, 69, 0.15);
 }
 
 /* --- Modal --- */
@@ -381,8 +398,10 @@
   }
 
   .actionBtn {
-    margin-right: 0.5rem;
-    font-size: 0.8rem;
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
   }
 
   .modal {
