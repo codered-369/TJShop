@@ -21,39 +21,37 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
       left: 0,
       width: '100vw',
       height: '100vh',
-      backgroundColor: '#FDFBF7', // Luxury cream background
+      backgroundColor: '#000', // Cinematic black hides letterboxing perfectly
       zIndex: 999999,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       opacity: isVisible ? 1 : 0,
-      transition: 'opacity 0.8s ease-in-out', // Smoother, slightly slower fade
+      transition: 'opacity 0.8s ease-in-out',
       pointerEvents: isVisible ? 'all' : 'none',
       overflow: 'hidden'
     }}>
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: '800px', // Scales nicely on desktop, fits perfectly on mobile
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <video 
-          src="/splash.mp4" 
-          autoPlay 
-          muted 
-          playsInline 
-          ref={(el) => { if (el) el.playbackRate = 1.3; }} // Speeds up the video playback by 30%
-          style={{ 
-            width: '100%', 
-            height: 'auto', 
-            // The magic CSS trick: Fades the harsh edges perfectly into the background!
-            WebkitMaskImage: 'radial-gradient(ellipse at center, black 50%, transparent 85%)',
-            maskImage: 'radial-gradient(ellipse at center, black 50%, transparent 85%)',
-          }}
-        />
-      </div>
+      <video 
+        className="splash-video"
+        src="/splash.mp4" 
+        autoPlay 
+        muted 
+        playsInline 
+        ref={(el) => { if (el) el.playbackRate = 1.3; }}
+      />
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .splash-video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover; /* Beautiful full screen on desktop */
+        }
+        @media (max-width: 768px) {
+          .splash-video {
+            object-fit: contain; /* Prevents extreme cropping on mobile */
+          }
+        }
+      `}} />
     </div>
   );
 }
