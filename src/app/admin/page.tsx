@@ -1,6 +1,7 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './page.module.css';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Product {
   id: string;
@@ -13,44 +14,107 @@ interface Product {
 
 export default function AdminDemo() {
   const [activeTab, setActiveTab] = useState('Products');
-  const [products, setProducts] = useState<Product[]>([
-    { id: '101', name: 'Crimson Silk Saree', price: '4999', category: 'Sarees', stock: 12, image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=100' },
-    { id: '102', name: 'Embroidered Anarkali', price: '2499', category: 'Kurtis', stock: 5, image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=100' },
-    { id: '103', name: 'Gold Zari Lehenga', price: '12999', category: 'Lehengas', stock: 2, image: 'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?q=80&w=100' },
-  ]);
-
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState<Product>({ id: '', name: '', price: '', category: 'Sarees', stock: 0, image: 'https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?q=80&w=100' });
+  const [formData, setFormData] = useState<Product>({ id: '', name: '', price: '', category: 'Sarees', stock: 0, image: '' });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const lowStockCount = products.filter(p => p.stock < 5).length;
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (data) setProducts(data);
+    if (error) console.error("Error fetching products:", error);
+    setIsLoading(false);
+  };
 
-  const handleDelete = (id: string) => {
-    if(confirm("Are you sure you want to delete this product?")) {
-      setProducts(products.filter(p => p.id !== id));
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const lowStockCount = products.filter(p => p.stock < 5 && p.stock > 0).length;
+  const outOfStockCount = products.filter(p => p.stock === 0).length;
+  const totalInventoryValue = products.reduce((acc, p) => acc + (parseFloat(p.price) * p.stock), 0);
+
+  const handleDelete = async (id: string) => {
+    if(confirm("Are you sure you want to permanently delete this product?")) {
+      try {
+        const { error } = await supabase.from('products').delete().eq('id', id);
+        if (error) throw error;
+        setProducts(products.filter(p => p.id !== id));
+      } catch (error: any) {
+        alert("Error deleting: " + error.message);
+      }
     }
   };
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData(product);
+    setImageFile(null); // Reset file selection
     setIsModalOpen(true);
   };
 
   const handleAdd = () => {
     setEditingProduct(null);
-    setFormData({ id: Date.now().toString(), name: '', price: '', category: 'Sarees', stock: 10, image: '' });
+    setFormData({ id: '', name: '', price: '', category: 'Sarees', stock: 10, image: '' });
+    setImageFile(null);
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id ? formData : p));
-    } else {
-      setProducts([...products, formData]);
+    setIsSaving(true);
+
+    try {
+      let finalImageUrl = formData.image;
+
+      // 1. Upload image to Supabase Storage if a new file was selected
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, imageFile);
+
+        if (uploadError) throw new Error("Image upload failed: " + uploadError.message);
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+        
+        finalImageUrl = publicUrl;
+      }
+
+      const productPayload = {
+        name: formData.name,
+        price: formData.price.toString(),
+        category: formData.category,
+        stock: formData.stock,
+        image: finalImageUrl,
+      };
+
+      // 2. Save to Supabase Database
+      if (editingProduct) {
+        const { error } = await supabase.from('products').update(productPayload).eq('id', editingProduct.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('products').insert([productPayload]);
+        if (error) throw error;
+      }
+
+      // Refresh table
+      await fetchProducts();
+      setIsModalOpen(false);
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setIsSaving(false);
     }
-    setIsModalOpen(false);
   };
 
   return (
@@ -75,21 +139,21 @@ export default function AdminDemo() {
             <h1 className={styles.pageTitle} style={{marginBottom: '2rem'}}>Welcome back, Tejaswini!</h1>
             <div className={styles.statsGrid}>
                <div className={styles.statCard}>
-                 <div className={styles.statValue}>₹45,200</div>
-                 <div className={styles.statLabel}>Revenue This Month</div>
+                 <div className={styles.statValue}>₹{isLoading ? '...' : totalInventoryValue.toLocaleString('en-IN')}</div>
+                 <div className={styles.statLabel}>Total Inventory Value</div>
                </div>
                <div className={styles.statCard}>
-                 <div className={styles.statValue}>18</div>
-                 <div className={styles.statLabel}>Orders Pending on WhatsApp</div>
+                 <div className={styles.statValue}>{isLoading ? '...' : products.length}</div>
+                 <div className={styles.statLabel}>Total Products Listed</div>
                </div>
                <div className={styles.statCard}>
-                 <div className={styles.statValue}>342</div>
-                 <div className={styles.statLabel}>Store Views</div>
+                 <div className={styles.statValue} style={{ color: outOfStockCount > 0 ? '#dc3545' : 'inherit' }}>{isLoading ? '...' : outOfStockCount}</div>
+                 <div className={styles.statLabel}>Out of Stock Items</div>
                </div>
             </div>
             <div className={styles.tableContainer} style={{padding: '4rem', textAlign: 'center', color: 'var(--color-text-light)'}}>
                <h3 style={{marginBottom: '1rem', color: 'var(--color-primary)', fontFamily: 'var(--font-playfair)'}}>Advanced Analytics</h3>
-               <p>Beautiful revenue graphs and visitor heatmaps will appear here once we connect the database!</p>
+               <p>To track "Revenue" and "Store Views", we can connect Vercel Analytics and a Sales Logger in Phase 3!</p>
             </div>
           </div>
         )}
@@ -103,11 +167,11 @@ export default function AdminDemo() {
 
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
-                <div className={styles.statValue}>{products.length}</div>
+                <div className={styles.statValue}>{isLoading ? '...' : products.length}</div>
                 <div className={styles.statLabel}>Total Products</div>
               </div>
               <div className={styles.statCard}>
-                <div className={styles.statValue}>{lowStockCount}</div>
+                <div className={styles.statValue}>{isLoading ? '...' : lowStockCount}</div>
                 <div className={styles.statLabel}>Low Stock Items</div>
               </div>
               <div className={styles.statCard}>
@@ -128,31 +192,36 @@ export default function AdminDemo() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map(product => (
-                    <tr key={product.id}>
-                      <td>
-                        <div className={styles.productCell}>
-                          <img src={product.image} alt="" className={styles.productThumb} />
-                          {product.name}
-                        </div>
-                      </td>
-                      <td>{product.category}</td>
-                      <td>₹{product.price}</td>
-                      <td>
-                        <span style={{ color: product.stock < 5 ? '#dc3545' : '#28a745', fontWeight: 500 }}>
-                          {product.stock} in stock
-                        </span>
-                      </td>
-                      <td>
-                        <button className={styles.actionBtn} onClick={() => handleEdit(product)}>Edit</button>
-                        <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => handleDelete(product.id)}>Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                  {products.length === 0 && (
+                  {isLoading ? (
                     <tr>
-                      <td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>No products found.</td>
+                      <td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>Loading from Database...</td>
                     </tr>
+                  ) : products.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>No products found. Add one above!</td>
+                    </tr>
+                  ) : (
+                    products.map(product => (
+                      <tr key={product.id}>
+                        <td>
+                          <div className={styles.productCell}>
+                            <img src={product.image} alt="" className={styles.productThumb} />
+                            {product.name}
+                          </div>
+                        </td>
+                        <td>{product.category}</td>
+                        <td>₹{product.price}</td>
+                        <td>
+                          <span style={{ color: product.stock < 5 ? '#dc3545' : '#28a745', fontWeight: 500 }}>
+                            {product.stock} in stock
+                          </span>
+                        </td>
+                        <td>
+                          <button className={styles.actionBtn} onClick={() => handleEdit(product)}>Edit</button>
+                          <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => handleDelete(product.id)}>Delete</button>
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>
@@ -246,6 +315,7 @@ export default function AdminDemo() {
                     className={styles.uploadInput} 
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
+                        setImageFile(e.target.files[0]);
                         setFormData({...formData, image: URL.createObjectURL(e.target.files[0])});
                       }
                     }} 
@@ -253,8 +323,10 @@ export default function AdminDemo() {
                 </div>
               </div>
               <div className={styles.modalActions}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button type="submit" className={styles.saveBtn}>Save Product</button>
+                <button type="button" className={styles.cancelBtn} onClick={() => setIsModalOpen(false)} disabled={isSaving}>Cancel</button>
+                <button type="submit" className={styles.saveBtn} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save Product'}
+                </button>
               </div>
             </form>
           </div>
