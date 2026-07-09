@@ -49,6 +49,7 @@ export default function AdminDemo() {
   // Custom Notifications
   const [toast, setToast] = useState({ message: '', type: '' });
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteReviewConfirmId, setDeleteReviewConfirmId] = useState<string | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -278,16 +279,19 @@ export default function AdminDemo() {
     }
   };
 
-  const handleDeleteReview = async (id: string) => {
-    if (confirm("Are you sure you want to delete this review?")) {
-      try {
-        const { error } = await supabase.from('reviews').delete().eq('id', id);
-        if (error) throw error;
-        fetchReviews();
-        showToast("Review deleted successfully.");
-      } catch(err:any) {
-        showToast(err.message, "error");
-      }
+  const confirmDeleteReview = (id: string) => setDeleteReviewConfirmId(id);
+
+  const executeDeleteReview = async () => {
+    if (!deleteReviewConfirmId) return;
+    try {
+      const { error } = await supabase.from('reviews').delete().eq('id', deleteReviewConfirmId);
+      if (error) throw error;
+      fetchReviews();
+      showToast("Review deleted successfully.");
+    } catch(err:any) {
+      showToast(err.message, "error");
+    } finally {
+      setDeleteReviewConfirmId(null);
     }
   };
 
@@ -309,6 +313,19 @@ export default function AdminDemo() {
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
               <button onClick={() => setDeleteConfirmId(null)} className={styles.cancelBtn}>Cancel</button>
               <button onClick={executeDelete} className={styles.saveBtn} style={{ background: '#dc3545' }}>Yes, Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteReviewConfirmId && (
+        <div className={styles.modalOverlay} style={{ zIndex: 99998 }}>
+          <div className={styles.modal} style={{ maxWidth: '400px', textAlign: 'center', padding: '3rem 2rem' }}>
+            <h2 style={{ marginBottom: '1rem', color: '#dc3545', fontSize: '1.5rem' }}>Delete Review?</h2>
+            <p style={{ color: '#666', marginBottom: '2rem', lineHeight: '1.5' }}>Are you sure you want to permanently delete this customer review?</p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button onClick={() => setDeleteReviewConfirmId(null)} className={styles.cancelBtn}>Cancel</button>
+              <button onClick={executeDeleteReview} className={styles.saveBtn} style={{ background: '#dc3545' }}>Yes, Delete</button>
             </div>
           </div>
         </div>
@@ -623,7 +640,7 @@ export default function AdminDemo() {
                         <td style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{review.comment}</td>
                         <td>{new Date(review.created_at).toLocaleDateString()}</td>
                         <td>
-                          <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => handleDeleteReview(review.id)}>Delete</button>
+                          <button className={`${styles.actionBtn} ${styles.delete}`} onClick={() => confirmDeleteReview(review.id)}>Delete</button>
                         </td>
                       </tr>
                     ))
