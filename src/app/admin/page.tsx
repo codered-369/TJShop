@@ -589,7 +589,7 @@ export default function AdminDemo() {
               <form onSubmit={handleCreateOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                   <label>Customer Name</label>
-                  <input type="text" required className={styles.input} value={orderForm.customerName} onChange={e => setOrderForm({...orderForm, customerName: e.target.value})} placeholder="e.g. Priya Sharma" />
+                  <input type="text" required className={styles.input} value={orderForm.customerName} onChange={e => setOrderForm({...orderForm, customerName: e.target.value})} placeholder="e.g. Pooja Gowda" />
                 </div>
                 
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
