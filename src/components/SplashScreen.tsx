@@ -52,41 +52,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
           }}
         />
         
-        {/* Flawless CSS Text Overlay */}
-        <div style={{
-          position: 'absolute',
-          bottom: '-40px',
-          width: '100%',
-          textAlign: 'center',
-          animation: 'slideUpFade 1.5s ease-out forwards',
-          animationDelay: '1s', // Wait for the turn-around animation
-          opacity: 0
-        }}>
-          <h1 style={{ 
-            color: 'var(--color-primary)', 
-            fontFamily: 'var(--font-playfair)',
-            fontSize: '2.2rem',
-            margin: 0,
-            letterSpacing: '1px',
-            textShadow: '0 4px 12px rgba(0,0,0,0.1)'
-          }}>
-            Tejaswini Selective Fabrics
-          </h1>
-        </div>
       </div>
-
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes slideUpFade {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}} />
     </div>
   );
 }
