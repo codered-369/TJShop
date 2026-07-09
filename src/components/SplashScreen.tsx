@@ -21,67 +21,89 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
       left: 0,
       width: '100vw',
       height: '100vh',
-      backgroundColor: '#000',
+      backgroundColor: '#FDFBF7', // Always use cream as the base for seamless fade
       zIndex: 999999,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       opacity: isVisible ? 1 : 0,
-      transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)', // Buttery smooth fade
+      transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
       pointerEvents: isVisible ? 'all' : 'none',
       overflow: 'hidden'
     }}>
       
-      {/* Ambient Blur Background (The "Cool & Sexy" Aura Effect) */}
+      {/* DESKTOP VIEW: The Cinematic Video */}
       <video 
+        className="splash-video-desktop"
         src="/splash.mp4" 
         autoPlay 
         muted 
         playsInline 
         ref={(el) => { if (el) el.playbackRate = 1.3; }}
-        style={{ 
-          position: 'absolute',
-          width: '150%', 
-          height: '150%', 
-          objectFit: 'cover',
-          filter: 'blur(50px) brightness(0.5)',
-          transform: 'scale(1.1)',
-          zIndex: 1
-        }}
       />
       
-      {/* The crisp, centered main video */}
-      <video 
-        className="splash-video-main"
-        src="/splash.mp4" 
-        autoPlay 
-        muted 
-        playsInline 
-        ref={(el) => { if (el) el.playbackRate = 1.3; }}
-        style={{ 
-          position: 'relative',
-          zIndex: 2,
-        }}
-      />
+      {/* MOBILE VIEW: The Native App CSS Animation */}
+      <div className="splash-mobile-animation">
+        <img src="/logo.png" alt="Tejaswini Logo" className="splash-mobile-logo" />
+      </div>
 
       <style dangerouslySetInnerHTML={{__html: `
-        .splash-video-main {
+        /* Desktop Video Styles */
+        .splash-video-desktop {
+          position: absolute;
           width: 100%;
           height: 100%;
           object-fit: cover;
           animation: cinematicZoom 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+          display: block;
         }
+
+        /* Mobile Animation Container */
+        .splash-mobile-animation {
+          display: none;
+          position: relative;
+          width: 100%;
+          height: 100%;
+          background: #FDFBF7; /* Pure luxury cream */
+          justify-content: center;
+          align-items: center;
+        }
+
+        .splash-mobile-logo {
+          width: 280px;
+          height: auto;
+          filter: drop-shadow(0 15px 30px rgba(133, 28, 44, 0.15)); /* Subtle maroon shadow */
+          animation: mobileElegance 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        /* Media Query to switch views */
         @media (max-width: 768px) {
-          .splash-video-main {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+          .splash-video-desktop {
+            display: none !important; /* Completely hide the clunky horizontal video on mobile */
+          }
+          .splash-mobile-animation {
+            display: flex !important; /* Show the beautiful native CSS animation */
           }
         }
+
         @keyframes cinematicZoom {
           0% { transform: scale(1.05); }
           100% { transform: scale(1); }
+        }
+
+        @keyframes mobileElegance {
+          0% {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.05) translateY(0);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
         }
       `}} />
     </div>
