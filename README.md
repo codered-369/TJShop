@@ -29,39 +29,9 @@ It features a stunning storefront for customers to browse categories, view trend
 - **Authentication:** Supabase Auth with strict Row Level Security (RLS) policies
 - **Deployment:** Vercel
 
-## 📦 Local Development Setup
+## 🔒 Proprietary Software
 
-To run this project locally, follow these steps:
-
-### 1. Clone the repository
-```bash
-git clone <your-repo-url>
-cd tj-app
-```
-
-### 2. Install dependencies
-```bash
-npm install
-```
-
-### 3. Set up Environment Variables
-Create a `.env.local` file in the root directory and add your Supabase credentials:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-### 4. Supabase Setup
-You will need to configure the following in your Supabase project:
-- **Tables:** `products`, `categories`, `orders`, `reviews`.
-- **Storage Buckets:** Create a **public** bucket named `product-images`.
-- **Auth & RLS:** Enable Email authentication and set up Row Level Security policies allowing public `SELECT` access and authenticated `INSERT/UPDATE/DELETE` access.
-
-### 5. Run the Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the storefront, and `http://localhost:3000/admin` to access the dashboard.
+This project is a proprietary application developed specifically for Tejaswini Boutique. It is a commercial product and is not intended for public distribution, cloning, or replication. All rights are reserved by the original creators.
 
 ## 🎨 Design Philosophy
 The UI was meticulously designed to evoke a premium, luxurious feel ("Elegance in Every Thread"). It uses sophisticated typography (Playfair Display for headings), subtle animations, glassmorphism elements in the navigation, and a refined maroon & cream color palette suitable for a high-end fabric boutique.
